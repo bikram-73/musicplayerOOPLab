@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Spotify Clone</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout_main">
+    <property name="spacing"><number>0</number></property>
+    <property name="leftMargin"><number>0</number></property>
+    <property name="topMargin"><number>0</number></property>
+    <property name="rightMargin"><number>0</number></property>
+    <property name="bottomMargin"><number>0</number></property>
+    <item>
+     <widget class="QSplitter" name="mainSplitter">
+      <property name="orientation"><enum>Qt::Horizontal</enum></property>
+      <property name="handleWidth"><number>1</number></property>
+      <widget class="QWidget" name="sidebarWidget">
+       <property name="minimumSize"><size><width>250</width><height>0</height></size></property>
+       <property name="maximumSize"><size><width>300</width><height>16777215</height></size></property>
+       <layout class="QVBoxLayout" name="verticalLayout_sidebar">
+        <property name="leftMargin"><number>20</number></property>
+        <property name="topMargin"><number>20</number></property>
+        <property name="rightMargin"><number>20</number></property>
+        <item>
+         <widget class="QPushButton" name="btnHome">
+          <property name="text"><string>🏠 Home</string></property>
+          <property name="flat"><bool>true</bool></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnSearch">
+          <property name="text"><string>🔍 Search</string></property>
+          <property name="flat"><bool>true</bool></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnLibrary">
+          <property name="text"><string>📚 Your Library</string></property>
+          <property name="flat"><bool>true</bool></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblPlaylists">
+          <property name="text"><string>PLAYLISTS</string></property>
+          <property name="styleSheet"><string>color: #b3b3b3; font-size: 11px; font-weight: bold; margin-top: 20px;</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QListWidget" name="listPlaylists">
+          <property name="styleSheet"><string>background: transparent; color: #b3b3b3; border: none; outline: 0;</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnAddPlaylist">
+          <property name="text"><string>➕ Create Playlist</string></property>
+          <property name="flat"><bool>true</bool></property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      
+      <widget class="QStackedWidget" name="stackedWidget">
+       <!-- HOME PAGE -->
+       <widget class="QWidget" name="pageHome">
+        <layout class="QVBoxLayout" name="verticalLayout_home">
+         <item>
+          <widget class="QLabel" name="lblHomeHeader">
+           <property name="text"><string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:24pt; font-weight:700; color:#ffffff;&quot;&gt;Good Morning&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string></property>
+           <property name="styleSheet"><string>padding-left: 20px; padding-top: 20px; background: transparent;</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QListWidget" name="listHomeItems">
+           <property name="viewMode"><enum>QListView::IconMode</enum></property>
+           <property name="movement"><enum>QListView::Static</enum></property>
+           <property name="resizeMode"><enum>QListView::Adjust</enum></property>
+           <property name="spacing"><number>10</number></property>
+           <property name="styleSheet"><string>background: transparent; border: none; padding: 20px;</string></property>
+           <property name="iconSize"><size><width>150</width><height>150</height></size></property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       
+       <!-- SEARCH PAGE -->
+       <widget class="QWidget" name="pageSearch">
+        <layout class="QVBoxLayout" name="verticalLayout_search">
+         <item>
+          <widget class="QLineEdit" name="lineSearch">
+           <property name="placeholderText"><string>What do you want to listen to?</string></property>
+           <property name="styleSheet"><string>background: #ffffff; color: #000000; border-radius: 20px; padding: 10px; margin: 20px; font-size: 14px;</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="searchTable">
+           <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+           <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+           <property name="selectionMode"><enum>QAbstractItemView::SingleSelection</enum></property>
+           <property name="showGrid"><bool>false</bool></property>
+           <attribute name="horizontalHeaderVisible"><bool>true</bool></attribute>
+           <attribute name="verticalHeaderVisible"><bool>false</bool></attribute>
+           <column><property name="text"><string>#</string></property></column>
+           <column><property name="text"><string>Title</string></property></column>
+           <column><property name="text"><string>Artist</string></property></column>
+           <column><property name="text"><string>Duration</string></property></column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       
+       <!-- LIBRARY / PLAYLIST PAGE (Same as before) -->
+       <widget class="QWidget" name="pageLibrary">
+        <layout class="QVBoxLayout" name="verticalLayout_library">
+         <item>
+          <widget class="QLabel" name="lblPlaylistHeader">
+           <property name="text"><string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:36pt; font-weight:700;&quot;&gt;Liked Songs&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string></property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QTableWidget" name="trackTable">
+           <property name="editTriggers"><set>QAbstractItemView::NoEditTriggers</set></property>
+           <property name="selectionBehavior"><enum>QAbstractItemView::SelectRows</enum></property>
+           <property name="selectionMode"><enum>QAbstractItemView::SingleSelection</enum></property>
+           <property name="showGrid"><bool>false</bool></property>
+           <attribute name="horizontalHeaderVisible"><bool>true</bool></attribute>
+           <attribute name="verticalHeaderVisible"><bool>false</bool></attribute>
+           <column><property name="text"><string>#</string></property></column>
+           <column><property name="text"><string>Title</string></property></column>
+           <column><property name="text"><string>Artist</string></property></column>
+           <column><property name="text"><string>Duration</string></property></column>
+           <column><property name="text"><string>♡</string></property></column>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+    
+    <!-- BOTTOM PLAYER BAR -->
+    <item>
+     <widget class="QWidget" name="playerBarWidget">
+      <property name="minimumSize"><size><width>0</width><height>90</height></size></property>
+      <property name="maximumSize"><size><width>16777215</width><height>90</height></size></property>
+      <layout class="QHBoxLayout" name="horizontalLayout_player">
+       <item>
+        <widget class="QWidget" name="nowPlayingWidget">
+         <property name="minimumSize"><size><width>250</width><height>0</height></size></property>
+         <layout class="QHBoxLayout" name="horizontalLayout_nowPlaying">
+          <item>
+           <widget class="QLabel" name="lblCoverArt">
+            <property name="minimumSize"><size><width>56</width><height>56</height></size></property>
+            <property name="maximumSize"><size><width>56</width><height>56</height></size></property>
+            <property name="styleSheet"><string>background: #282828;</string></property>
+            <property name="scaledContents"><bool>true</bool></property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_nowPlayingDetails">
+            <item><widget class="QLabel" name="lblPlayingTitle"><property name="text"><string>Title</string></property></widget></item>
+            <item><widget class="QLabel" name="lblPlayingArtist"><property name="text"><string>Artist</string></property></widget></item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnLike">
+            <property name="text"><string>♡</string></property>
+            <property name="flat"><bool>true</bool></property>
+            <property name="styleSheet"><string>color: #b3b3b3; font-size: 20px;</string></property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="controlsWidget">
+         <layout class="QVBoxLayout" name="verticalLayout_controls">
+          <property name="spacing"><number>0</number></property>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_buttons">
+            <property name="alignment"><set>Qt::AlignCenter</set></property>
+            <item><widget class="QPushButton" name="btnShuffle"><property name="text"><string>🔀</string></property><property name="flat"><bool>true</bool></property></widget></item>
+            <item><widget class="QPushButton" name="btnPrev"><property name="text"><string>⏮</string></property><property name="flat"><bool>true</bool></property></widget></item>
+            <item><widget class="QPushButton" name="btnPlayPause"><property name="text"><string>▶</string></property></widget></item>
+            <item><widget class="QPushButton" name="btnNext"><property name="text"><string>⏭</string></property><property name="flat"><bool>true</bool></property></widget></item>
+            <item><widget class="QPushButton" name="btnRepeat"><property name="text"><string>🔁</string></property><property name="flat"><bool>true</bool></property></widget></item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_progress">
+            <item><widget class="QLabel" name="lblCurrentTime"><property name="text"><string>0:00</string></property></widget></item>
+            <item><widget class="QSlider" name="progressSlider"><property name="orientation"><enum>Qt::Horizontal</enum></property></widget></item>
+            <item><widget class="QLabel" name="lblTotalTime"><property name="text"><string>0:00</string></property></widget></item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="volumeWidget">
+         <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+         <layout class="QHBoxLayout" name="horizontalLayout_volume">
+          <item><widget class="QLabel" name="lblVolumeIcon"><property name="text"><string>🔊</string></property></widget></item>
+          <item><widget class="QSlider" name="volumeSlider"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="maximum"><number>100</number></property><property name="value"><number>50</number></property></widget></item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

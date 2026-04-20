@@ -1,0 +1,7 @@
+# C++ / Qt / macOS Ignore Files
+.DS_Store
+build/
+.qtcreator/
+CMakeLists.txt.user
+*.db
+*.sqlite
