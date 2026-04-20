@@ -9,6 +9,8 @@
 #include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QFileInfo>
+#include <QDir>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -164,11 +166,11 @@ void MainWindow::setupDatabase()
     if (query.next() && query.value(0).toInt() == 0) {
         // Insert dummy data
         query.exec("INSERT INTO tracks (title, artist, file_path, duration, cover_path, is_liked) VALUES "
-                   "('First Song', 'Artist A', '/Users/bikramdas/OOPLabProject/Songs/my_queen.mp3', 200, '', 0)");
+                   "('First Song', 'Artist A', 'my_queen.mp3', 200, '', 0)");
         query.exec("INSERT INTO tracks (title, artist, file_path, duration, cover_path, is_liked) VALUES "
-                   "('Second Song', 'Artist B', '/Users/bikramdas/OOPLabProject/Songs/shararat.mp3', 180, '', 1)");
+                   "('Second Song', 'Artist B', 'shararat.mp3', 180, '', 1)");
         query.exec("INSERT INTO tracks (title, artist, file_path, duration, cover_path, is_liked) VALUES "
-                   "('Third Song', 'Artist C', '/Users/bikramdas/OOPLabProject/Songs/baby_doll.mp3', 210, '', 0)");
+                   "('Third Song', 'Artist C', 'baby_doll.mp3', 210, '', 0)");
     }
 
     // Load Data
@@ -290,7 +292,8 @@ void MainWindow::updateNowPlayingInfo()
 {
     Track* current = activePlayingPlaylist.getCurrentTrack();
     if (current != nullptr) {
-        QString path = QString::fromStdString(current->getFilePath());
+        QString basePath = QFileInfo(__FILE__).absolutePath() + "/Songs/";
+        QString path = basePath + QString::fromStdString(current->getFilePath());
         player->setSource(QUrl::fromLocalFile(path));
         
         ui->lblPlayingTitle->setText(QString::fromStdString(current->getTitle()));
