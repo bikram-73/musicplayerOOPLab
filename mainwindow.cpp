@@ -19,9 +19,10 @@
 #include "libraryscanner.h"
 #include "marqueelabel.h"
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(User user, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , currentUser(user)
 {
     ui->setupUi(this);
 
@@ -218,11 +219,10 @@ void MainWindow::openArtistProfile(const QString& artistName)
 
 void MainWindow::setupDatabase()
 {
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("music_library.db");
-
-    if (!db.open()) {
-        qDebug() << "Error: Could not open database!";
+    QSqlDatabase db = QSqlDatabase::database();
+    
+    if (!db.isOpen()) {
+        qDebug() << "Error: Database is not open!";
         return;
     }
 

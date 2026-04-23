@@ -12,6 +12,9 @@ qt_add_executable(MusicPlayer
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    user.h user.cpp
+    authmanager.h authmanager.cpp
+    logindialog.h logindialog.cpp
     track.h track.cpp
     playlist.h playlist.cpp
     libraryscanner.h libraryscanner.cpp
