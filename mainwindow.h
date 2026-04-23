@@ -7,6 +7,7 @@
 #include <QTableWidgetItem>
 #include <QListWidgetItem>
 #include "playlist.h"
+#include "user.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -19,7 +20,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(User user, QWidget *parent = nullptr);
     ~MainWindow() override;
 
 private slots:
@@ -43,6 +44,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    User currentUser;
 
     Playlist likedSongsPlaylist;
     std::vector<Playlist> customPlaylists;
