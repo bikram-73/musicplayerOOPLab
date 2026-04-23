@@ -6,6 +6,9 @@
 #include <QAudioOutput>
 #include <QTableWidgetItem>
 #include <QListWidgetItem>
+#include <QLabel>
+#include <QScrollArea>
+#include <QGridLayout>
 #include "playlist.h"
 
 QT_BEGIN_NAMESPACE
@@ -21,6 +24,8 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
+    
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private slots:
     void on_btnPlayPause_clicked();
@@ -41,6 +46,10 @@ private slots:
     void on_listHomeItems_itemDoubleClicked(QListWidgetItem *item);
     void on_searchTable_itemDoubleClicked(QTableWidgetItem *item);
 
+    // Dynamic Artist Profile slot
+    void on_tableCellClicked(int row, int column, QTableWidget* table);
+    void on_artistTrackTable_itemDoubleClicked(QTableWidgetItem *item);
+
 private:
     Ui::MainWindow *ui;
 
@@ -56,10 +65,25 @@ private:
 
     void setupDatabase();
     void applySpotifyStyle();
+    void applyFloatingAesthetics(); // New floating UI builder
+    void setupArtistPage(); // New dynamic page builder
+    void openArtistProfile(const QString& artistName);
+
     void updateNowPlayingInfo();
     void loadHomeData();
     void populateTrackTable(const Playlist& playlist, QTableWidget* table);
     void refreshPlaylistsList();
     void toggleLikeStatus();
+    
+    // Dynamic Artist Profile Widgets
+    QWidget* pageArtist;
+    QLabel* lblArtistHeader;
+    QTableWidget* artistTrackTable;
+    Playlist artistPlaylist;
+    
+    // Dynamic Home Grid Widgets
+    QScrollArea* homeScrollArea;
+    QWidget* homeGridWidget;
+    QGridLayout* homeGridLayout;
 };
 #endif // MAINWINDOW_H

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(MusicPlayer LANGUAGES CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Multimedia Sql)
 
@@ -13,6 +14,8 @@ qt_add_executable(MusicPlayer
     mainwindow.ui
     track.h track.cpp
     playlist.h playlist.cpp
+    libraryscanner.h libraryscanner.cpp
+    marqueelabel.h marqueelabel.cpp
 )
 
 target_link_libraries(MusicPlayer

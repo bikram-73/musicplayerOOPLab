@@ -11,6 +11,13 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QDir>
+#include <QGraphicsDropShadowEffect>
+#include <QVBoxLayout>
+#include <QScrollArea>
+#include <QGridLayout>
+#include <QEvent>
+#include "libraryscanner.h"
+#include "marqueelabel.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -23,6 +30,10 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Apply main style
     applySpotifyStyle();
+    
+    // Page setup
+    setupArtistPage();
+    applyFloatingAesthetics();
 
     // Init Audio Engine
     player = new QMediaPlayer(this);
@@ -130,6 +141,81 @@ void MainWindow::applySpotifyStyle()
     )");
 }
 
+void MainWindow::applyFloatingAesthetics()
+{
+    // Apply floating shadows to main UI components for a premium feel
+    auto addShadow = [](QWidget* target) {
+        QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect();
+        shadow->setBlurRadius(20);
+        shadow->setColor(QColor(0, 0, 0, 150));
+        shadow->setOffset(0, 4);
+        target->setGraphicsEffect(shadow);
+    };
+
+    addShadow(ui->playerBarWidget);
+    addShadow(ui->lblCoverArt);
+    
+    // Hover effects via dynamic stylesheet
+    this->setStyleSheet(this->styleSheet() + R"(
+        QTableWidget::item:hover { background-color: #333333; }
+        QPushButton { transition: all 0.2s ease-in-out; }
+    )");
+}
+
+void MainWindow::setupArtistPage()
+{
+    pageArtist = new QWidget();
+    pageArtist->setStyleSheet("background-color: #121212; border-top-left-radius: 8px; border-top-right-radius: 8px;");
+    
+    QVBoxLayout* layout = new QVBoxLayout(pageArtist);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
+    
+    // Header for Artist Page
+    lblArtistHeader = new QLabel("Artist Name");
+    lblArtistHeader->setStyleSheet(
+        "color: #ffffff; padding: 40px 30px; font-size: 56px; font-weight: bold; "
+        "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #4a4a4a, stop:1 #121212);"
+        "border-top-left-radius: 8px; border-top-right-radius: 8px;"
+    );
+    layout->addWidget(lblArtistHeader);
+    
+    artistTrackTable = new QTableWidget();
+    artistTrackTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    artistTrackTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    artistTrackTable->setSelectionMode(QAbstractItemView::SingleSelection);
+    artistTrackTable->setShowGrid(false);
+    artistTrackTable->verticalHeader()->setVisible(false);
+    artistTrackTable->setStyleSheet(ui->trackTable->styleSheet());
+    layout->addWidget(artistTrackTable);
+    
+    ui->stackedWidget->addWidget(pageArtist);
+    
+    connect(artistTrackTable, &QTableWidget::itemDoubleClicked, this, &MainWindow::on_artistTrackTable_itemDoubleClicked);
+    
+    // Make other tables click-aware for artist profile hopping
+    connect(ui->searchTable, &QTableWidget::cellClicked, this, [this](int r, int c) { on_tableCellClicked(r, c, ui->searchTable); });
+    connect(ui->trackTable, &QTableWidget::cellClicked, this, [this](int r, int c) { on_tableCellClicked(r, c, ui->trackTable); });
+}
+
+void MainWindow::openArtistProfile(const QString& artistName)
+{
+    artistPlaylist.clear();
+    artistPlaylist.setName(artistName.toStdString());
+    
+    for (const auto& t : allTracks) {
+        if (QString::fromStdString(t.getArtist()) == artistName) {
+            artistPlaylist.addTrack(t);
+        }
+    }
+    
+    lblArtistHeader->setText("<html><head/><body><p><span style=\" font-size:48pt; font-weight:700;\">" + artistName + "</span></p></body></html>");
+    populateTrackTable(artistPlaylist, artistTrackTable);
+    
+    currentViewPlaylist = &artistPlaylist;
+    ui->stackedWidget->setCurrentWidget(pageArtist);
+}
+
 void MainWindow::setupDatabase()
 {
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
@@ -162,15 +248,32 @@ void MainWindow::setupDatabase()
                "playlist_id INTEGER, "
                "track_id INTEGER)");
 
-    query.exec("SELECT COUNT(*) FROM tracks");
-    if (query.next() && query.value(0).toInt() == 0) {
-        // Insert dummy data
-        query.exec("INSERT INTO tracks (title, artist, file_path, duration, cover_path, is_liked) VALUES "
-                   "('First Song', 'Artist A', 'my_queen.mp3', 200, '', 0)");
-        query.exec("INSERT INTO tracks (title, artist, file_path, duration, cover_path, is_liked) VALUES "
-                   "('Second Song', 'Artist B', 'shararat.mp3', 180, '', 1)");
-        query.exec("INSERT INTO tracks (title, artist, file_path, duration, cover_path, is_liked) VALUES "
-                   "('Third Song', 'Artist C', 'baby_doll.mp3', 210, '', 0)");
+    // Scan for new dynamic tracks
+    QString basePath = QFileInfo(__FILE__).absolutePath() + "/Songs/";
+    QDir dir(basePath);
+    if (!dir.exists()) {
+        basePath = "/Users/bikramdas/OOPLabProject/MusicPlayer/Songs/";
+    }
+    
+    std::vector<Track> scannedTracks = LibraryScanner::scanDirectory(basePath);
+    
+    for (const Track& t : scannedTracks) {
+        // Only insert if the file isn't already in the database
+        query.prepare("SELECT COUNT(*) FROM tracks WHERE file_path LIKE ?");
+        query.addBindValue("%" + QString::fromStdString(t.getFilePath()) + "%");
+        query.exec();
+        
+        if (query.next() && query.value(0).toInt() == 0) {
+            QSqlQuery insertQ;
+            insertQ.prepare("INSERT INTO tracks (title, artist, file_path, duration, cover_path, is_liked) VALUES (?, ?, ?, ?, ?, ?)");
+            insertQ.addBindValue(QString::fromStdString(t.getTitle()));
+            insertQ.addBindValue(QString::fromStdString(t.getArtist()));
+            insertQ.addBindValue(QString::fromStdString(t.getFilePath())); // Store just filename
+            insertQ.addBindValue(t.getDuration());
+            insertQ.addBindValue(QString::fromStdString(t.getCoverPath()));
+            insertQ.addBindValue(t.getIsLiked() ? 1 : 0);
+            insertQ.exec();
+        }
     }
 
     // Load Data
@@ -184,6 +287,21 @@ void MainWindow::setupDatabase()
         std::string title = query.value(1).toString().toStdString();
         std::string artist = query.value(2).toString().toStdString();
         std::string path = query.value(3).toString().toStdString();
+        
+        // Verify if file still exists in the filesystem, if not, purge it from DB
+        QString fullPath = basePath + QString::fromStdString(path);
+        if (!QFile::exists(fullPath)) {
+            QSqlQuery cleanQ;
+            cleanQ.prepare("DELETE FROM tracks WHERE id = ?");
+            cleanQ.addBindValue(id);
+            cleanQ.exec();
+            
+            cleanQ.prepare("DELETE FROM playlist_tracks WHERE track_id = ?");
+            cleanQ.addBindValue(id);
+            cleanQ.exec();
+            continue; // Skip loading this deleted track
+        }
+        
         int duration = query.value(4).toInt();
         std::string cover = query.value(5).toString().toStdString();
         bool liked = query.value(6).toBool();
@@ -224,22 +342,82 @@ void MainWindow::setupDatabase()
 
 void MainWindow::loadHomeData()
 {
-    ui->listHomeItems->clear();
-    for (const auto& track : allTracks) {
-        QListWidgetItem* item = new QListWidgetItem();
-        item->setText(QString::fromStdString(track.getTitle() + "\n" + track.getArtist()));
+    QString basePath = QFileInfo(__FILE__).absolutePath() + "/Songs/";
+    QDir dir(basePath);
+    if (!dir.exists()) basePath = "/Users/bikramdas/OOPLabProject/MusicPlayer/Songs/";
+
+    if (ui->listHomeItems->isVisibleTo(ui->pageHome)) {
+        ui->verticalLayout_home->removeWidget(ui->listHomeItems);
+        ui->listHomeItems->hide();
         
-        if (!track.getCoverPath().empty()) {
-            QPixmap pix(QString::fromStdString(track.getCoverPath()));
-            item->setIcon(QIcon(pix));
-        } else {
-            // Dummy icon
-            QPixmap dummy(150, 150);
-            dummy.fill(QColor("#282828"));
-            item->setIcon(QIcon(dummy));
+        homeScrollArea = new QScrollArea();
+        homeScrollArea->setWidgetResizable(true);
+        homeScrollArea->setFrameShape(QFrame::NoFrame);
+        homeScrollArea->setStyleSheet("background: transparent;");
+        
+        homeGridWidget = new QWidget();
+        homeGridWidget->setStyleSheet("background: transparent;");
+        homeGridLayout = new QGridLayout(homeGridWidget);
+        homeGridLayout->setSpacing(20);
+        homeGridLayout->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+        
+        homeScrollArea->setWidget(homeGridWidget);
+        ui->verticalLayout_home->addWidget(homeScrollArea);
+    } else {
+        // Clear layout on reload
+        QLayoutItem* item;
+        while ((item = homeGridLayout->takeAt(0)) != nullptr) {
+            if (item->widget()) delete item->widget();
+            delete item;
         }
-        item->setData(Qt::UserRole, track.getId());
-        ui->listHomeItems->addItem(item);
+    }
+
+    int row = 0;
+    int col = 0;
+    for (const auto& track : allTracks) {
+        QWidget* trackWidget = new QWidget();
+        trackWidget->setFixedSize(200, 260); 
+        trackWidget->setStyleSheet("background: #181818; border-radius: 8px;");
+        
+        QVBoxLayout* vLayout = new QVBoxLayout(trackWidget);
+        vLayout->setContentsMargins(15, 15, 15, 15);
+        
+        QLabel* cover = new QLabel();
+        cover->setFixedSize(170, 170);
+        cover->setScaledContents(true);
+        if (!track.getCoverPath().empty()) {
+            cover->setPixmap(QPixmap(basePath + QString::fromStdString(track.getCoverPath())));
+        } else {
+            QPixmap dummy(170, 170);
+            dummy.fill(QColor("#282828"));
+            cover->setPixmap(dummy);
+        }
+        
+        QLabel* title = new QLabel(QString::fromStdString(track.getTitle()));
+        title->setStyleSheet("color: #ffffff; font-weight: bold; font-size: 14px; background: transparent;");
+        title->setFixedWidth(170);
+        
+        MarqueeLabel* artist = new MarqueeLabel();
+        artist->setStyleSheet("color: #b3b3b3; font-size: 13px; background: transparent;");
+        artist->setFixedWidth(170);
+        artist->setText(QString::fromStdString(track.getArtist()));
+        
+        vLayout->addWidget(cover);
+        vLayout->addWidget(title);
+        vLayout->addWidget(artist);
+        vLayout->addStretch();
+        
+        trackWidget->setProperty("trackId", track.getId());
+        trackWidget->setCursor(Qt::PointingHandCursor);
+        trackWidget->installEventFilter(this);
+        
+        homeGridLayout->addWidget(trackWidget, row, col);
+        
+        col++;
+        if (col == 3) { // 3-column constraint
+            col = 0;
+            row++;
+        }
     }
 }
 
@@ -293,14 +471,23 @@ void MainWindow::updateNowPlayingInfo()
     Track* current = activePlayingPlaylist.getCurrentTrack();
     if (current != nullptr) {
         QString basePath = QFileInfo(__FILE__).absolutePath() + "/Songs/";
-        QString path = basePath + QString::fromStdString(current->getFilePath());
+        QDir dir(basePath);
+        if (!dir.exists()) {
+            // Fallback for when __FILE__ directory is resolved to build directory instead of source directory
+            basePath = "/Users/bikramdas/OOPLabProject/MusicPlayer/Songs/";
+        }
+        // Extract just the filename to handle cases where the db stores old absolute paths
+        QString fileName = QFileInfo(QString::fromStdString(current->getFilePath())).fileName();
+        QString path = basePath + fileName;
+        
+        qDebug() << "Attempting to play path:" << path;
         player->setSource(QUrl::fromLocalFile(path));
         
         ui->lblPlayingTitle->setText(QString::fromStdString(current->getTitle()));
         ui->lblPlayingArtist->setText(QString::fromStdString(current->getArtist()));
         
         if (!current->getCoverPath().empty()) {
-            ui->lblCoverArt->setPixmap(QPixmap(QString::fromStdString(current->getCoverPath())));
+            ui->lblCoverArt->setPixmap(QPixmap(basePath + QString::fromStdString(current->getCoverPath())));
         } else {
             ui->lblCoverArt->setPixmap(QPixmap());
         }
@@ -416,8 +603,44 @@ void MainWindow::on_listHomeItems_itemDoubleClicked(QListWidgetItem *item) {
     updateNowPlayingInfo();
 }
 
+void MainWindow::on_tableCellClicked(int row, int column, QTableWidget* table) {
+    if (column == 2) { // Column index 2 is "Artist"
+        QTableWidgetItem* artistItem = table->item(row, column);
+        if (artistItem) {
+            openArtistProfile(artistItem->text());
+        }
+    }
+}
+
+void MainWindow::on_artistTrackTable_itemDoubleClicked(QTableWidgetItem *item) {
+    int clickedRow = item->row();
+    activePlayingPlaylist = artistPlaylist;
+    activePlayingPlaylist.setCurrentIndex(clickedRow);
+    updateNowPlayingInfo();
+}
+
 void MainWindow::on_volumeSlider_valueChanged(int value) {
     audioOutput->setVolume(value / 100.0f);
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
+    if (event->type() == QEvent::MouseButtonPress) {
+        if (watched->isWidgetType() && watched->property("trackId").isValid()) {
+            int tzId = watched->property("trackId").toInt();
+            Playlist pl;
+            for(auto t : allTracks) {
+                if (t.getId() == tzId) {
+                    pl.addTrack(t);
+                    break;
+                }
+            }
+            activePlayingPlaylist = pl;
+            activePlayingPlaylist.setCurrentIndex(0);
+            updateNowPlayingInfo();
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(watched, event);
 }
 
 void MainWindow::on_lineSearch_textChanged(const QString &text) {
